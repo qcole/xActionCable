@@ -85,13 +85,13 @@ class ActionCable {
     _listener = socketChannel.stream.listen(
       handleData.onData,
       onError: (reason) {
-        _disconnect(); // close a socket and the timer
+        disconnect(); // close a socket and the timer
         onCannotConnect?.call(reason);
       },
     );
   }
 
-  void _disconnect() {
+  void disconnect() {
     _timer.cancel();
     _socketChannel.sink.close();
     _listener.cancel();
@@ -113,7 +113,7 @@ class ActionCable {
 
     if (DateTime.now().difference(_lastPing!) > Duration(seconds: 6)) {
       onConnectionLost?.call();
-      _disconnect();
+      disconnect();
     }
   }
 
