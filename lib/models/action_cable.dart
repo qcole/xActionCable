@@ -109,12 +109,9 @@ class ActionCable {
   }
 
   void _healthCheck({VoidCallback? onConnectionLost}) {
-    print("Action cable _healthCheck");
     if (_lastPing == null) return;
 
-    print("Action cable _healthCheck after ping null check");
     if (DateTime.now().difference(_lastPing!) > Duration(seconds: 6)) {
-      print("Action cable more than 6 seconds till last ping");
       onConnectionLost?.call();
       _disconnect();
     }
