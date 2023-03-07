@@ -1,16 +1,16 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:x_action_cable/store/callbacks.store.dart';
 import 'package:x_action_cable/types.dart';
 import 'package:x_action_cable/web_socket/abstractions/web_socket.interface.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
 
+import '../helpers/handle_data.helper.dart';
+import '../helpers/identifier.helper.dart';
+import '../helpers/logger.helper.dart';
 import 'action_callback.dart';
 import 'action_channel.dart';
-import 'helpers/identifier.helper.dart';
-import 'helpers/handle_data.helper.dart';
-import 'helpers/logger.helper.dart';
 
 IWebSocket _webSocket = IWebSocket();
 
@@ -46,7 +46,7 @@ class ActionCable {
       onCannotConnect: onCannotConnect,
       socketChannel: socketChannel,
     );
-    _addHandleHelthCheckListener();
+    _addHandleHelthCheckListener(onConnectionLost);
   }
 
   HandleDataHelper _createHandleDataHelper({
@@ -55,7 +55,9 @@ class ActionCable {
   }) {
     return HandleDataHelper(
       onConnected: onConnected,
-      onPingMessage: (time) => _lastPing,
+      onPingMessage: (time) {
+        _lastPing = time;
+      },
     );
   }
 
@@ -100,15 +102,18 @@ class ActionCable {
     ActionLoggerHelper.log(payload);
   }
 
-  void _addHandleHelthCheckListener() {
-    _timer = Timer.periodic(const Duration(seconds: 3), _healthCheck);
+  void _addHandleHelthCheckListener(VoidCallback? onConnectionLost) {
+    _timer = Timer.periodic(const Duration(seconds: 3), (_) {
+      _healthCheck(onConnectionLost: onConnectionLost);
+    });
   }
 
-  void _healthCheck(_, {VoidCallback? onConnectionLost}) {
+  void _healthCheck({VoidCallback? onConnectionLost}) {
     if (_lastPing == null) return;
+
     if (DateTime.now().difference(_lastPing!) > Duration(seconds: 6)) {
-      _disconnect();
       onConnectionLost?.call();
+      _disconnect();
     }
   }
 
