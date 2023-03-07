@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:x_action_cable/models/action_response.dart';
 import 'package:x_action_cable/store/callbacks.store.dart';
 import 'package:collection/collection.dart';
 import 'package:logger/logger.dart';
@@ -78,7 +79,12 @@ class HandleDataHelper with CallbacksStore {
       return;
     }
 
-    actionCallback.callback(payload['message']);
+    final response = ActionResponse(
+      data: payload['message']['data'],
+      error: payload['message']['error'],
+    );
+
+    actionCallback.callback(response);
   }
 
   void _onPing(Map payload) {

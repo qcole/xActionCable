@@ -19,14 +19,16 @@ class ActionLoggerHelper {
 
     String name = '';
     if (data['type'] != null) {
-      name = '| PROTOCOL |';
+      name = 'PROTOCOL';
       if (data['type'] == 'ping') name += '~ PING ~';
-    } else if (data.containsKey('command') && data['command'] == 'message') {
-      name = '| PERFOMING ACTION |';
+    } else if (data.containsKey('command')) {
+      name = 'PERFOMING ACTION';
+    } else if (data.containsKey('message')) {
+      name = 'SERVER';
     }
 
     final dataString = data.toString();
-    dev.log(dataString, name: name);
+    dev.log(dataString, name: '(AC) $name');
     return dataString;
   }
 }
