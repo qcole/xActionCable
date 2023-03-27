@@ -33,6 +33,7 @@ class HandleDataHelper with CallbacksStore {
   void _handleProtocolMessage(Map payload) {
     switch (payload['type']) {
       case 'ping':
+        print('ing');
         _onPing(payload);
         break;
       case 'welcome':
