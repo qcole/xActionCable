@@ -1,6 +1,6 @@
 import 'package:web_socket_channel/web_socket_channel.dart';
 
-import '../imp/web_socket_stub.dart'
+import '../imp/web_socket_io.dart'
     if (dart.library.io) '../imp/web_socket_io.dart'
     if (dart.library.html) '../imp/web_socket_web.dart';
 
