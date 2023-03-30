@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:x_action_cable/models/action_response.dart';
-import 'package:x_action_cable/store/callbacks.store.dart';
+import '../models/action_response.dart';
+import '../store/callbacks.store.dart';
 import 'package:collection/collection.dart';
 import 'package:logger/logger.dart';
 
@@ -33,7 +33,6 @@ class HandleDataHelper with CallbacksStore {
   void _handleProtocolMessage(Map payload) {
     switch (payload['type']) {
       case 'ping':
-        print('ing');
         _onPing(payload);
         break;
       case 'welcome':
