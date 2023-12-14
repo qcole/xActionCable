@@ -87,12 +87,11 @@ class HandleDataHelper with CallbacksStore {
     actionCallback.callback(response);
   }
 
-  void _onPing(Map payload) {
-    // rails sends epoch as seconds not miliseconds
-    final lastPing = DateTime.fromMillisecondsSinceEpoch(
-      payload['message'] * 1000,
-    );
-    _onPingMessage(lastPing);
+  void _onPing(Map _) {
+    // Note: You cannot rely on the clocks being synchronized. Therefore, you cannot use the
+    // timestamp of the server to detect timeouts! ALWAYS use your local clock!!!
+    // It could also be wrong, but that's not a problem as long as we compare the times with ourselves!
+    _onPingMessage(DateTime.now());
   }
 
   void _onWelcome() => _onConnected?.call();
