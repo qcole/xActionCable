@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:web_socket_channel/web_socket_channel.dart';
-import 'package:x_action_cable/store/callbacks.store.dart';
+import 'package:x_action_cable/store/action_channel_callbacks_store.dart';
 import 'package:x_action_cable/types.dart';
 import 'package:x_action_cable/web_socket/abstractions/web_socket.interface.dart';
 
@@ -30,6 +30,9 @@ class ActionCable {
   /// Timer for helth check
   late Timer _timer;
 
+  final ActionChannelCallbacksStore _actionChannelCallbacksStore =
+      ActionChannelCallbacksStore();
+
   /// Factory for connect to ActionCable on Rails
   ActionCable.connect(
     String url, {
@@ -39,6 +42,7 @@ class ActionCable {
     required void Function(dynamic reason)? onCannotConnect,
   }) {
     final handleDataHelper = _createHandleDataHelper(
+      actionChannelCallbacksStore: this._actionChannelCallbacksStore,
       onConnected: onConnected,
       onConnectionLost: onConnectionLost,
     );
@@ -52,10 +56,12 @@ class ActionCable {
   }
 
   HandleDataHelper _createHandleDataHelper({
+    required ActionChannelCallbacksStore actionChannelCallbacksStore,
     required VoidCallback? onConnected,
     required VoidCallback? onConnectionLost,
   }) {
     return HandleDataHelper(
+      actionChannelCallbacksStore: actionChannelCallbacksStore,
       onConnected: onConnected,
       onPingMessage: (time) {
         _lastPing = time;
@@ -97,6 +103,12 @@ class ActionCable {
     _timer.cancel();
     _socketChannel.sink.close();
     _listener.cancel();
+
+    // All action channels are disconnected when the main ActionCable connection is.
+    for (VoidCallback? onDisconnected
+        in this._actionChannelCallbacksStore.disconnected.values) {
+      onDisconnected?.call();
+    }
   }
 
   void _send(Map<String, dynamic> payload) {
@@ -147,14 +159,16 @@ class ActionCable {
       channelParams,
     );
 
-    CallbacksStore.subscribed[identifier] = onSubscribed;
-    CallbacksStore.subscribeTimedOut[identifier] = onSubscribeTimedOut;
-    CallbacksStore.diconnected[identifier] = onDisconnected;
-    CallbacksStore.message[identifier] = callbacks;
+    this._actionChannelCallbacksStore.subscribed[identifier] = onSubscribed;
+    this._actionChannelCallbacksStore.subscribeTimedOut[identifier] =
+        onSubscribeTimedOut;
+    this._actionChannelCallbacksStore.disconnected[identifier] = onDisconnected;
+    this._actionChannelCallbacksStore.message[identifier] = callbacks;
 
     _send({'identifier': identifier, 'command': 'subscribe'});
 
     return ActionChannel(
+      actionChannelCallbacksStore: this._actionChannelCallbacksStore,
       identifier: identifier,
       subscriptionTimeout: subscriptionTimeout,
       sendMessageCallback: _send,

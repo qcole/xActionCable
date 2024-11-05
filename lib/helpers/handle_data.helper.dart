@@ -1,19 +1,23 @@
 import 'dart:convert';
 
-import '../models/action_response.dart';
-import '../store/callbacks.store.dart';
 import 'package:collection/collection.dart';
+import 'package:x_action_cable/store/action_channel_callbacks_store.dart';
+
+import '../models/action_response.dart';
 import 'package:logger/logger.dart';
 
 import '../types.dart';
 import 'identifier.helper.dart';
 import 'logger.helper.dart';
 
-class HandleDataHelper with CallbacksStore {
+class HandleDataHelper {
+  final ActionChannelCallbacksStore actionChannelCallbacksStore;
+
   final VoidCallback? _onConnected;
   final OnPingMessage _onPingMessage;
 
   HandleDataHelper({
+    required this.actionChannelCallbacksStore,
     required VoidCallback? onConnected,
     required OnPingMessage onPingMessage,
   })  : _onConnected = onConnected,
@@ -54,7 +58,8 @@ class HandleDataHelper with CallbacksStore {
 
   void _handleDataMessage(Map<String, dynamic> payload) {
     final channelId = IdentifierHelper.parseChannelId(payload['identifier']);
-    final onMessageCallback = CallbacksStore.message[channelId];
+    final onMessageCallback =
+        this.actionChannelCallbacksStore.message[channelId];
     if (onMessageCallback == null) {
       Logger().e('Currently you are disconnected from channel = $channelId');
       return;
@@ -98,7 +103,8 @@ class HandleDataHelper with CallbacksStore {
 
   void _onDisconnected(Map payload) {
     final channelId = IdentifierHelper.parseChannelId(payload['identifier']);
-    final onDisconnected = CallbacksStore.diconnected[channelId];
+    final onDisconnected =
+        this.actionChannelCallbacksStore.disconnected[channelId];
     onDisconnected?.call();
   }
 
@@ -106,8 +112,8 @@ class HandleDataHelper with CallbacksStore {
     final channelId = IdentifierHelper.parseChannelId(payload['identifier']);
 
     // Remove the subscribeTimedOut callback after the subscription was confirmed.
-    final onSubscribed = CallbacksStore.subscribed[channelId];
-    CallbacksStore.subscribeTimedOut.remove(channelId);
+    final onSubscribed = this.actionChannelCallbacksStore.subscribed[channelId];
+    this.actionChannelCallbacksStore.subscribeTimedOut.remove(channelId);
     if (onSubscribed != null) {
       onSubscribed();
     }
