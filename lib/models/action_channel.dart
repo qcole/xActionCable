@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:x_action_cable/store/callbacks.store.dart';
+import 'package:x_action_cable/store/action_channel_callbacks_store.dart';
 import 'package:x_action_cable/types.dart';
 
 /// This class represents the channel that you are going to perfome actions
@@ -13,6 +13,8 @@ import 'package:x_action_cable/types.dart';
 /// );
 /// ```
 class ActionChannel {
+  final ActionChannelCallbacksStore actionChannelCallbacksStore;
+
   final String identifier;
 
   final Duration subscriptionTimeout;
@@ -21,6 +23,7 @@ class ActionChannel {
   Timer? _subscriptionTimeoutTimer;
 
   ActionChannel({
+    required this.actionChannelCallbacksStore,
     required this.identifier,
     required this.subscriptionTimeout,
     required SendMessageCallback sendMessageCallback,
@@ -33,7 +36,7 @@ class ActionChannel {
         // callback will have been removed by now.
         // Otherwise this is a timeout.
         final VoidCallback? subscriptionTimeout =
-            CallbacksStore.subscribeTimedOut[this.identifier];
+            this.actionChannelCallbacksStore.subscribeTimedOut[this.identifier];
         subscriptionTimeout?.call();
       },
     );
@@ -44,10 +47,10 @@ class ActionChannel {
   /// channel.unsubscribe();
   /// ```
   void unsubscribe() {
-    CallbacksStore.subscribed.remove(identifier);
-    CallbacksStore.subscribeTimedOut.remove(identifier);
-    CallbacksStore.diconnected.remove(identifier);
-    CallbacksStore.message.remove(identifier);
+    this.actionChannelCallbacksStore.subscribed.remove(identifier);
+    this.actionChannelCallbacksStore.subscribeTimedOut.remove(identifier);
+    this.actionChannelCallbacksStore.disconnected.remove(identifier);
+    this.actionChannelCallbacksStore.message.remove(identifier);
 
     this._subscriptionTimeoutTimer?.cancel();
 
