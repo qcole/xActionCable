@@ -14,6 +14,8 @@ import 'action_channel.dart';
 
 IWebSocket _webSocket = IWebSocket();
 
+const Duration _kSubscriptionTimeout = Duration(seconds: 4);
+
 class ActionCable {
   /// Last ping to calculate when need to drop the connection
   /// because it passed 6 seconds without response from server
@@ -126,6 +128,7 @@ class ActionCable {
   ///   'Chat', // either 'Chat' and 'ChatChannel' is fine
   ///    channelParams: { 'room': 'private' },
   ///    onSubscribed: (){}, // `confirm_subscription` received
+  ///    onSubscribeTimedOut: (){}, // Didn't receive `confirm_subscription` within [subscriptionTimeout].
   ///    onDisconnected: (){}, // `disconnect` received
   ///    callbacks: [actionCallback] // Callback list to able the server  to call any method that you registered in your aplicaticon
   ///  );
@@ -134,8 +137,10 @@ class ActionCable {
     String channelName, {
     Map? channelParams,
     VoidCallback? onSubscribed,
+    VoidCallback? onSubscribeTimedOut,
     VoidCallback? onDisconnected,
     List<ActionCallback> callbacks = const [],
+    Duration subscriptionTimeout = _kSubscriptionTimeout,
   }) {
     final identifier = IdentifierHelper.encodeChanelId(
       channelName,
@@ -143,11 +148,16 @@ class ActionCable {
     );
 
     CallbacksStore.subscribed[identifier] = onSubscribed;
+    CallbacksStore.subscribeTimedOut[identifier] = onSubscribeTimedOut;
     CallbacksStore.diconnected[identifier] = onDisconnected;
     CallbacksStore.message[identifier] = callbacks;
 
     _send({'identifier': identifier, 'command': 'subscribe'});
 
-    return ActionChannel(identifier: identifier, sendMessageCallback: _send);
+    return ActionChannel(
+      identifier: identifier,
+      subscriptionTimeout: subscriptionTimeout,
+      sendMessageCallback: _send,
+    );
   }
 }

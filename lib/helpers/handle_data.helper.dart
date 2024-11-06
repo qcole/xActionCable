@@ -104,7 +104,10 @@ class HandleDataHelper with CallbacksStore {
 
   void _onConfirmSubscription(Map payload) {
     final channelId = IdentifierHelper.parseChannelId(payload['identifier']);
+
+    // Remove the subscribeTimedOut callback after the subscription was confirmed.
     final onSubscribed = CallbacksStore.subscribed[channelId];
+    CallbacksStore.subscribeTimedOut.remove(channelId);
     if (onSubscribed != null) {
       onSubscribed();
     }
